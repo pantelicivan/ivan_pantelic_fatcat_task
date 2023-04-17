@@ -7,3 +7,7 @@ How to test App?
 
 1. Set .env file
 2. Send GET http://localhost:4000
+
+How to run tests?
+
+1. yarn test

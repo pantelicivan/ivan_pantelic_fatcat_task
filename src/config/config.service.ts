@@ -25,4 +25,13 @@ export class ConfigService {
   get(key: string): string {
     return this.envConfig[key] || '';
   }
+
+  /**
+   * Set value for key
+   * @param key - Key string.
+   * @param value - Value string.
+   */
+  set(key: string, value: string): void {
+    this.envConfig[key] = value;
+  }
 }

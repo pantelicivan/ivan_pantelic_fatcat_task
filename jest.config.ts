@@ -4,7 +4,7 @@ import type { Config } from '@jest/types';
 const config: Config.InitialOptions = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['<rootDir>/test/**/*spec.ts'],
+  testMatch: ['<rootDir>/src/test/*.spec.ts'],
   // Default is ["/node_modules/"], which we remove because all tests
   // are in the test folder. It improves performance a bit.
   testPathIgnorePatterns: [],

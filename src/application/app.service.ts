@@ -48,12 +48,14 @@ export class AppService {
    * Finds path thought matrix.
    * @returns Array of objects.
    */
-  findPath(): SearchResult[] {
+  findPath(): any {
     const matrixSize = Number(this.configService.get('MATRIX_SIZE'));
     const matrix = this.generateMatrix(matrixSize);
 
     const startRow = Number(this.configService.get('START_ROW'));
     const startCol = Number(this.configService.get('START_COL'));
+    const destRow = Number(this.configService.get('DEST_ROW'));
+    const destCol = Number(this.configService.get('DEST_COL'));
     const numberOfBlockingObjects = Number(this.configService.get('NUM_OF_BO'));
 
     matrix[startRow][startCol] = 2; // Mark the start cell with the value 2
@@ -62,28 +64,27 @@ export class AppService {
       .fill(false)
       .map(() => new Array(matrix[0].length).fill(false));
 
-    const path: number[][] = [];
-
     // Initialize the blocking object coordinates
     const blockingObjectsCoordinates: number[][][] = [];
     const blockingObjectsCoordinatesTemp: number[][] = [];
     const result: SearchResult[] = [];
 
+    const start = performance.now();
     this.dfs(
       matrix,
       visited,
       startRow,
       startCol,
-      matrix.length - 1,
-      matrix[0].length - 1,
+      destRow,
+      destCol,
       numberOfBlockingObjects,
-      path,
       blockingObjectsCoordinates,
       blockingObjectsCoordinatesTemp,
       result,
     );
+    const end = performance.now();
 
-    return result;
+    return { result: result, execution_time: `${end - start} ms` };
   }
 
   /**
@@ -95,7 +96,6 @@ export class AppService {
    * @param destRow - Destination row.
    * @param destCol - Destination col.
    * @param numberOfBlockingObjects - Number of blocking objects.
-   * @param path - Path from start to end.
    * @param blockingObjectsCoordinates - Blocking object coordinates.
    * @param blockingObjectsCoordinatesTemp - Blocking object coordinates - Temp variable
    * @param result - Result
@@ -109,11 +109,11 @@ export class AppService {
     destRow: number,
     destCol: number,
     numberOfBlockingObjects: number,
-    path: number[][],
     blockingObjectsCoordinates: number[][][],
     blockingObjectsCoordinatesTemp: number[][],
     result: SearchResult[],
   ): boolean {
+    const path: number[][] = [];
     // If the current cell is out of bounds or has already been visited, return false
     if (!this.isValidCoord(startRow, startCol, matrix, visited)) {
       return false;
@@ -127,6 +127,10 @@ export class AppService {
     // If the current cell is the destination, add it to the path and return true
     if (startRow === destRow && startCol === destCol) {
       path.push([startRow, startCol]);
+      result.push({
+        movingObjectCoordinate: path,
+        blockingObjectCoordinates: blockingObjectsCoordinatesTemp,
+      });
       return true;
     }
 
@@ -173,6 +177,10 @@ export class AppService {
       blockingObjectsCoordinates.push(blockingObjectsCoordinatesTemp);
     }
 
+    result.push({
+      movingObjectCoordinate: path,
+      blockingObjectCoordinates: blockingObjectsCoordinatesTemp,
+    });
     // Explore each neighboring cell in the order of up, right, down, left
     const directions: number[][] = [
       [-1, 0],
@@ -180,6 +188,7 @@ export class AppService {
       [1, 0],
       [0, -1],
     ];
+    let counter = 0;
     for (let i = 0; i < directions.length; i++) {
       const [dRow, dCol] = directions[i];
       if (
@@ -191,18 +200,21 @@ export class AppService {
           destRow,
           destCol,
           numberOfBlockingObjects,
-          path,
           blockingObjectsCoordinates,
           blockingObjectsCoordinatesTemp,
           result,
         )
       ) {
-        result.push({
-          movingObjectCoordinate: path,
-          blockingObjectCoordinates: blockingObjectsCoordinatesTemp,
-        });
         // If a path is found from the current cell to the destination, return true
         return true;
+      }
+      counter++;
+      if (counter === directions.length) {
+        result.push({
+          movingObjectCoordinate: path,
+          blockingObjectCoordinates: [],
+        });
+        return false;
       }
     }
 
